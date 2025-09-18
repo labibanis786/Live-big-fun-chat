@@ -1,0 +1,27 @@
+workflows:
+  android-release:
+    name: Android Release
+    environment:
+      vars:
+        KEYSTORE_PASSWORD: Encrypted(...)
+        KEY_PASSWORD: Encrypted(...)
+        KEYSTORE_ALIAS: Encrypted(...)
+        KEYSTORE_BASE64: Encrypted(...)
+    scripts:
+      - name: Decode keystore
+        script: |
+          echo $KEYSTORE_BASE64 | base64 --decode > android/app/upload_keystore.jks
+          cat > android/key.properties <<EOL
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEYSTORE_ALIAS
+          storeFile=upload_keystore.jks
+          EOL
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Generate launcher icons
+        script: flutter pub run flutter_launcher_icons
+      - name: Build app bundle
+        script: flutter build appbundle --release
+    artifacts:
+      - build/app/outputs/**/*.aab
